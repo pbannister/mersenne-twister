@@ -24,19 +24,20 @@ int main(int ac, char** av) {
 	enum {
 		dtSample = 30000
 	};
+	unsigned v = 0;
 	{
 		ZRandom o;
 		ZTimer t;
 		int n = 0;
 		do {
 			for (int i = 0; i < 1000000; ++i) {
-				unsigned v = o.getValue();
+				v = o.getValue();
 			}
 			++n;
 		} while (t.split() < dtSample);
 		int dt = t.elapsed();
-		printf("Computed %d million primes in %d MS - %0.1f m/s \n", n, dt,
-				((n * 1000.0) / dt));
+		printf("Computed %d million primes in %d MS - %0.1f m/s - last %u \n", n, dt,
+				((n * 1000.0) / dt), v);
 	}
 
 	return 0;
