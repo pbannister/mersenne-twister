@@ -1,44 +1,49 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include "ZRandom.h"
 
-class ZTimer {
-	clock_t t1;
-	clock_t t2;
+#include "mersenne_twister.h"
+#include "os_clock.h"
+
+class timer_o {
+private:
+    os_clock::timed_ns_t t1 = 0;
+    os_clock::timed_ns_t t2 = 0;
+
 public:
-	ZTimer() :
-			t1(::clock()), t2(t1) {
-	}
-	int elapsed() {
-		return (int) (((t2 - t1) * 1000.0) / CLOCKS_PER_SEC);
-	}
-	int split() {
-		t2 = ::clock();
-		return elapsed();
-	}
+    timer_o() {
+        t1 = os_clock::time_get();
+        t2 = t1;
+    }
+    void split() {
+        t2 = os_clock::time_get();
+    }
+    os_clock::timed_ns_t elapsed_ns() {
+        return (t2 - t1);
+    }
+    os_clock::timed_ms_t elapsed_ms() {
+        return os_clock::ms_from_ns(elapsed_ns());
+    }
 };
 
 int main(int ac, char** av) {
+    constexpr unsigned ms_sample = 30000;
+    unsigned v = 0;
+    {
+        mersenne_twister_o o;
+        timer_o t;
+        int n = 0;
+        os_clock::timed_ms_t ms = 0;
+        do {
+            for (int i = 0; i < 1000000; ++i) {
+                v = o.random_get();
+            }
+            ++n;
+            t.split();
+            ms = t.elapsed_ms();
+        } while (ms < ms_sample);
+        printf("Computed %d million primes in %ld (ms) - %0.1f m/s - last %u \n", n, ms, ((n * 1000.0) / ms), v);
+    }
 
-	enum {
-		dtSample = 30000
-	};
-	unsigned v = 0;
-	{
-		ZRandom o;
-		ZTimer t;
-		int n = 0;
-		do {
-			for (int i = 0; i < 1000000; ++i) {
-				v = o.getValue();
-			}
-			++n;
-		} while (t.split() < dtSample);
-		int dt = t.elapsed();
-		printf("Computed %d million primes in %d MS - %0.1f m/s - last %u \n", n, dt,
-				((n * 1000.0) / dt), v);
-	}
-
-	return 0;
+    return 0;
 }
